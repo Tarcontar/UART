@@ -15,8 +15,7 @@
 class UART : public Stream
 {
 public:
-	static UART* UART8Bit(uint8_t uart);
-	static UART* UART9Bit(uint8_t uart);
+	UART(uint8_t uart = 1, bool nine_bit = false);
 	
 	~UART();
 	
@@ -38,7 +37,19 @@ public:
 	using Print::write; // pull in write(str) and write(buf, size) from Print
 	
 private:
-	UART(uint8_t uart = 1, bool nine_bit = false);
-
 	uint8_t m_TXn;
+	uint8_t m_uart;
+	
+	uint8_t RXENn;
+	uint8_t TXENn;
+	uint8_t RXCIEn;
+	uint8_t UCSZn0;
+	uint8_t UCSZn1;
+	uint8_t UCSZn2;
+	uint8_t USBSn;
+	uint8_t U2Xn;
+	
+	volatile uint8_t *v_UBRRnH;
+	volatile uint8_t *v_UBRRnL;
+	volatile uint8_t *v_UCSRnC;
 };
