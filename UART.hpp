@@ -15,11 +15,11 @@
 class UART : public Stream
 {
 public:
-	UART(uint8_t uart = 1, bool nine_bit = false);
+	UART(uint8_t uart = 1);
 	
 	~UART();
 	
-	void begin(int baud = 9600);
+	bool begin(int baud = 9600, bool nine_bit = false);
 	void end();
 	int available();
 	int peek();
@@ -28,6 +28,7 @@ public:
 	size_t write9bit(uint16_t data);
 	
 	int read();
+	bool readUL(unsigned long *val);
 	void flush();
 
 	bool error();

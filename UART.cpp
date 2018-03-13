@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include <avr/interrupt.h>
 
+bool uarts_in_use[4];
+
 volatile uint16_t v_buffer[4][UART_BUFFER_SIZE];
 volatile uint16_t v_start[4];
 volatile uint16_t v_end[4];
@@ -10,11 +12,24 @@ volatile bool v_ninthBitSet[4];
 
 volatile uint8_t *v_UDRn[4];
 volatile uint8_t *v_UCSRnA[4];
-volatile uint8_t *v_UCSRnB[4]
+volatile uint8_t *v_UCSRnB[4];
 
-UART::UART(uint8_t uart, bool nine_bit)
+UART::UART(uint8_t uart)
 {
 	m_uart = uart % 4;
+}
+
+UART::~UART()
+{
+	end();
+}
+
+bool UART::begin(int baud, bool nine_bit)
+{
+	if (uarts_in_use[m_uart])
+		return false;
+	uarts_in_use[m_uart] = true;
+	
 	v_start[m_uart] = 0;
 	v_end[m_uart] = 0;
 	v_error[m_uart] = false;
@@ -102,15 +117,7 @@ UART::UART(uint8_t uart, bool nine_bit)
 		*v_UCSRnB[m_uart] |= (1 << UCSZn2); 
 	*v_UCSRnC |= (0 << USBSn); //one stop bit else 1
 	*v_UCSRnC |= 0b00000000; //no parity bit
-}
-
-UART::~UART()
-{
-	end();
-}
-
-void UART::begin(int baud)
-{
+	
 	uint16_t baud_setting = (F_CPU / 8 / baud - 1) / 2;
 	*v_UBRRnH = baud_setting >> 8;
 	*v_UBRRnL = baud_setting;
@@ -121,6 +128,7 @@ void UART::end()
 {
 	flush();
 	*v_UCSRnB[m_uart] |= (0 << RXENn) | (0 << TXENn) | (0 << RXCIEn);
+	uarts_in_use[m_uart] = false;
 }
 
 int UART::available()
@@ -150,10 +158,28 @@ int UART::read()
 	if (v_start[m_uart] == v_end[m_uart]) {
 		return -1;
 	} else {
-		unsigned char c = v_buffer[m_uart][v_start[m_uart]];
+		int c = v_buffer[m_uart][v_start[m_uart]];
 		v_start[m_uart] = (v_start[m_uart] + 1) % UART_BUFFER_SIZE;
 		return c;
 	}
+}
+
+bool UART::readUL(unsigned long *val)
+{
+	if (available() >= 4)
+	{	
+		union u_tag {
+			byte b[4];
+			unsigned long ulval;
+		} u;
+		u.b[0] = read();
+		u.b[1] = read();
+		u.b[2] = read();
+		u.b[3] = read();
+		*val = u.ulval;
+		return true;
+	}
+	return false;
 }
 
 int UART::peek()
@@ -173,12 +199,22 @@ void UART::flush()
 
 bool UART::error()
 {
-	return v_error[m_uart];
+	if (v_error[m_uart])
+	{
+		v_error[m_uart] = false;
+		return true;
+	}
+	return false;
 }
 
 bool UART::ninthBitSet()
 {
-	return v_ninthBitSet[m_uart];
+	if (v_ninthBitSet[m_uart])
+	{
+		v_ninthBitSet[m_uart] = false;
+		return true;
+	}
+	return false;
 }
 
 
@@ -250,10 +286,10 @@ ISR(USART3_RX_vect)
 	{
 		v_error[id] = true;
 	}
-	uint16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
+	int16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
 	if (result & 0x100)
 		v_ninthBitSet[id] = true;
-	result |= *v_UDRn[id];
+	result = *v_UDRn[id];
 	v_buffer[id][v_end[id]] = result;
 	v_end[id] = (v_end[id] + 1) % UART_BUFFER_SIZE;
 	if (v_end[id] == v_start[id])
