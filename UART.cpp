@@ -286,10 +286,10 @@ ISR(USART3_RX_vect)
 	{
 		v_error[id] = true;
 	}
-	int16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
+	uint16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
 	if (result & 0x100)
 		v_ninthBitSet[id] = true;
-	result = *v_UDRn[id];
+	result |= *v_UDRn[id];
 	v_buffer[id][v_end[id]] = result;
 	v_end[id] = (v_end[id] + 1) % UART_BUFFER_SIZE;
 	if (v_end[id] == v_start[id])
