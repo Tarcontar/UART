@@ -19,6 +19,8 @@ public:
 	
 	~UART();
 	
+	static void clear();
+	
 	bool begin(int baud = 9600, bool nine_bit = false);
 	void end();
 	int available();

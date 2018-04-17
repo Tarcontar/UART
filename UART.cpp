@@ -24,6 +24,12 @@ UART::~UART()
 	end();
 }
 
+void UART::clear()
+{
+	for (int i = 0; i < 4; i++)
+		uarts_in_use[i] = false;
+}
+
 bool UART::begin(int baud, bool nine_bit)
 {
 	if (uarts_in_use[m_uart])
@@ -122,6 +128,7 @@ bool UART::begin(int baud, bool nine_bit)
 	*v_UBRRnH = baud_setting >> 8;
 	*v_UBRRnL = baud_setting;
 	*v_UCSRnA[m_uart] &= ~(1 << U2Xn); //disable rate doubler
+	return true;
 }
 
 void UART::end()
