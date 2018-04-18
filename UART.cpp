@@ -224,10 +224,8 @@ bool UART::ninthBitSet()
 	return false;
 }
 
-
-ISR(USART0_RX_vect)
+void receive(int id)
 {
-	int id = 0;
 	char status = *v_UCSRnA[id];
 	if (status & ((1 << FE) | (1 << DOR) | (1 << UPE)))
 	{
@@ -243,64 +241,24 @@ ISR(USART0_RX_vect)
 	{
 		v_start[id] = (v_start[id] + 1) % UART_BUFFER_SIZE;
 	}
+}
+
+ISR(USART0_RX_vect)
+{
+	receive(0);
 }
 
 ISR(USART1_RX_vect)
 {
-	int id = 1;
-	char status = *v_UCSRnA[id];
-	if (status & ((1 << FE) | (1 << DOR) | (1 << UPE)))
-	{
-		v_error[id] = true;
-	}
-	uint16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
-	if (result & 0x100)
-		v_ninthBitSet[id] = true;
-	result |= *v_UDRn[id];
-	v_buffer[id][v_end[id]] = result;
-	v_end[id] = (v_end[id] + 1) % UART_BUFFER_SIZE;
-	if (v_end[id] == v_start[id])
-	{
-		v_start[id] = (v_start[id] + 1) % UART_BUFFER_SIZE;
-	}
+	receive(1);
 }
 
 ISR(USART2_RX_vect)
 {
-	int id = 2;
-	char status = *v_UCSRnA[id];
-	if (status & ((1 << FE) | (1 << DOR) | (1 << UPE)))
-	{
-		v_error[id] = true;
-	}
-	uint16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
-	if (result & 0x100)
-		v_ninthBitSet[id] = true;
-	result |= *v_UDRn[id];
-	v_buffer[id][v_end[id]] = result;
-	v_end[id] = (v_end[id] + 1) % UART_BUFFER_SIZE;
-	if (v_end[id] == v_start[id])
-	{
-		v_start[id] = (v_start[id] + 1) % UART_BUFFER_SIZE;
-	}
+	receive(2);
 }
 
 ISR(USART3_RX_vect)
 {
-	int id = 3;
-	char status = *v_UCSRnA[id];
-	if (status & ((1 << FE) | (1 << DOR) | (1 << UPE)))
-	{
-		v_error[id] = true;
-	}
-	uint16_t result = ((*v_UCSRnB[id] >> 1) & 0x01) << 8;
-	if (result & 0x100)
-		v_ninthBitSet[id] = true;
-	result |= *v_UDRn[id];
-	v_buffer[id][v_end[id]] = result;
-	v_end[id] = (v_end[id] + 1) % UART_BUFFER_SIZE;
-	if (v_end[id] == v_start[id])
-	{
-		v_start[id] = (v_start[id] + 1) % UART_BUFFER_SIZE;
-	}
+	receive(3);
 }
