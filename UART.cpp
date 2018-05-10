@@ -14,6 +14,7 @@ volatile uint8_t *v_UDRn[4];
 volatile uint8_t *v_UCSRnA[4];
 volatile uint8_t *v_UCSRnB[4];
 
+
 UART::UART(uint8_t uart)
 {
 	m_uart = uart % 4;
@@ -30,7 +31,7 @@ void UART::clear()
 		uarts_in_use[i] = false;
 }
 
-bool UART::begin(int baud, bool nine_bit)
+bool UART::begin(uint32_t baud, bool nine_bit)
 {
 	if (uarts_in_use[m_uart])
 		return false;
@@ -143,6 +144,74 @@ int UART::available()
 	return ((int)(UART_BUFFER_SIZE + v_end[m_uart] - v_start[m_uart])) % UART_BUFFER_SIZE;
 }
 
+int UART::peek()
+{
+	if (v_start[m_uart] == v_end[m_uart]) {
+		return -1;
+	} else {
+		v_buffer[m_uart][v_start[m_uart]];
+	}
+}
+
+void UART::flush()
+{
+	v_start[m_uart] = 0;
+	v_end[m_uart] = 0;
+}
+
+void UART::print(const char* c)
+{
+	while (*c)
+	{
+		*this << *c;
+		++c;
+	}
+}
+
+void UART::print(String s)
+{
+	print(const_cast<char*>(s.c_str()));
+}
+
+void UART::print(const __FlashStringHelper* fsh)
+{
+	PGM_P p = reinterpret_cast<PGM_P>(fsh);
+	while (1) 
+	{
+		unsigned char c = pgm_read_byte(p++);
+		if (c == 0) break;
+		if (!write(c))
+			break;
+	}
+}
+
+void UART::print(const int i)
+{
+	char str[30];
+	sprintf(str, "%d", i);
+	*this << str;
+}
+
+void UART::print(const long l)
+{
+	*this << (int)l;
+}
+
+void UART::print(const float f)
+{
+	char str[30];
+	int num = f;
+	int komma = (f-num) * 100;
+	sprintf(str, "%d.%d", num, komma);
+	*this << str;
+}
+
+void UART::print(const double d)
+{
+	*this << (float)d;
+}
+
+
 size_t UART::write(uint8_t data)
 {
 	v_ninthBitSet[m_uart] = false;
@@ -189,21 +258,6 @@ bool UART::readUL(unsigned long *val)
 	return false;
 }
 
-int UART::peek()
-{
-	if (v_start[m_uart] == v_end[m_uart]) {
-		return -1;
-	} else {
-		v_buffer[m_uart][v_start[m_uart]];
-	}
-}
-
-void UART::flush()
-{
-	v_start[m_uart] = 0;
-	v_end[m_uart] = 0;
-}
-
 bool UART::error()
 {
 	if (v_error[m_uart])
@@ -242,7 +296,6 @@ void receive(int id)
 		v_start[id] = (v_start[id] + 1) % UART_BUFFER_SIZE;
 	}
 }
-
 
 ISR(USART0_RX_vect)
 {
