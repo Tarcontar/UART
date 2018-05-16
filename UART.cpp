@@ -197,6 +197,13 @@ void UART::print(const long l)
 	*this << (int)l;
 }
 
+void UART::print(const unsigned long lu)
+{
+	char str[30];
+	sprintf(str, "%lu", lu);
+	*this << str;
+}
+
 void UART::print(const float f)
 {
 	char str[30];

@@ -34,6 +34,7 @@ public:
 	void print(const __FlashStringHelper* fsh);
 	void print(const int i);
 	void print(const long l);
+	void print(const unsigned long l);
 	void print(const float f);
 	void print(const double d);
 	
@@ -43,6 +44,7 @@ public:
 	inline UART& operator<<(const __FlashStringHelper* fsh) { print(fsh); return *this; }
 	inline UART& operator<<(const int i) { print(i); return *this; }
 	inline UART& operator<<(const long l) { print(l); return *this; }
+	inline UART& operator<<(const unsigned long lu) { print(lu); return *this; }
 	inline UART& operator<<(const float f) { print(f); return *this; }
 	inline UART& operator<<(const double d) { print(d); return *this; }
 	
